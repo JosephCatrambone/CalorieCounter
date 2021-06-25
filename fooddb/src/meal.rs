@@ -52,6 +52,10 @@ impl Default for Meal {
 
 impl Meal {
 	fn add_food_to_meal(&mut self, food:&Food) {
-
+		self.calories += food.calories;
+		self.carbohydrate += food.carbohydrate;
+		self.fat += food.fat;
+		self.protein += food.protein;
+		self.foods.push(food.clone());
 	}
 }

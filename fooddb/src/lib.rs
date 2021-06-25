@@ -1,9 +1,8 @@
 
 //use hashbrown::HashMap;
 use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::io::{Error, Read};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::fs::{File, OpenOptions};
+use std::io::{BufReader, Read, Result, prelude::*};
 
 mod food;
 mod meal;
@@ -13,14 +12,14 @@ use meal::{Meal, MealID};
 
 #[derive(Serialize, Deserialize)]
 pub struct FoodDB {
-	last_food_id: FoodID,
-	last_meal_id: MealID,
+	last_food_id: u64,
+	last_meal_id: u64,
 	foods: Vec<Food>,
 	meals: Vec<Meal>,
 }
 
 impl FoodDB {
-	fn new(filename: &str) -> Self {
+	pub fn new() -> Self {
 		FoodDB {
 			last_food_id: 0,
 			last_meal_id: 0,
@@ -29,15 +28,24 @@ impl FoodDB {
 		}
 	}
 
-	fn open(filename: &str) -> Result<Self, Error> {
+	pub fn open(filename: &str) -> Result<Self> {
 		let mut fin = File::open(filename)?;
+		let mut reader = BufReader::new(fin);
 		let mut json_buffer = String::new();
-		fin.read_to_string(&mut json_buffer);
+		reader.read_to_string(&mut json_buffer);
 		let deserialized: FoodDB = serde_json::from_str(&json_buffer)?;
 		Ok(deserialized)
 	}
 
-	fn new_meal(&mut self) -> MealID {
+	pub fn save(&self, filename:&str) -> Result<()> {
+		let serialized = serde_json::to_vec(self)?;
+		//let mut fout = OpenOptions::new().write(true).create(true).truncate(true).open(filename);
+		let mut fout = File::create(filename)?;
+		fout.write_all(&serialized)?;
+		Ok(())
+	}
+
+	pub fn new_meal(&mut self) -> MealID {
 		let next_meal_id = self.last_meal_id+1;
 		self.last_meal_id = next_meal_id;
 		let meal = Meal {
@@ -48,19 +56,20 @@ impl FoodDB {
 		next_meal_id
 	}
 
-	fn new_food(&mut self) -> FoodID {
-		unimplemented!()
+	pub fn new_food(&mut self) -> FoodID {
+		let next_food_id = self.last_food_id+1;
+		self.last_food_id = next_food_id;
+		let food = Food {
+			id: next_food_id,
+			..Food::default()
+		};
+		self.foods.push(food);
+		next_food_id
 	}
 
-	fn add_food_to_meal(meal:MealID, food:FoodID, quantity:FoodQuantity) {
+	pub fn add_food_to_meal(meal: MealID, food: FoodID, quantity: FoodQuantity) {
 		unimplemented!()
 	}
-}
-
-
-pub fn save_db(db:&FoodDB, filename: &str) {
-    let serialized = serde_json::to_string(db).unwrap();
-    println!("serialized = {}", serialized);
 }
 
 #[cfg(test)]

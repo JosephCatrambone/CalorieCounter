@@ -12,7 +12,7 @@ pub type FoodID = u64;
 
 #[derive(Serialize, Deserialize)]
 pub struct Food {
-	pub id: FoodID,
+	pub id: u64,
 	pub name: String,
 	pub manufacturer: String,
 
@@ -87,7 +87,6 @@ impl Food {
 
 /// ```
 /// /// convert_food_quantity will take the given food, clone it internally, and return a new food with the same ID that has a different quantity.
-/// # use crate::food::*;
 /// # let base_food = Food::default();
 /// let new_food = convert_food_quantity(&base_food, FoodQuantity::Mass(200)); // What would the nutrition properties be for a 200g serving?
 /// ```
