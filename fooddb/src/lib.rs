@@ -1,7 +1,7 @@
 
 //use hashbrown::HashMap;
 use serde::{Deserialize, Serialize};
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::io::{BufReader, Read, Result, prelude::*};
 
 mod food;
@@ -29,10 +29,10 @@ impl FoodDB {
 	}
 
 	pub fn open(filename: &str) -> Result<Self> {
-		let mut fin = File::open(filename)?;
+		let fin = File::open(filename)?;
 		let mut reader = BufReader::new(fin);
 		let mut json_buffer = String::new();
-		reader.read_to_string(&mut json_buffer);
+		reader.read_to_string(&mut json_buffer)?;
 		let deserialized: FoodDB = serde_json::from_str(&json_buffer)?;
 		Ok(deserialized)
 	}
@@ -67,15 +67,44 @@ impl FoodDB {
 		next_food_id
 	}
 
-	pub fn add_food_to_meal(meal: MealID, food: FoodID, quantity: FoodQuantity) {
-		unimplemented!()
+	pub fn add_food_to_meal(&mut self, meal: MealID, food: FoodID, quantity: FoodQuantity) -> bool {
+		// Look up the meal.
+		let mut meal_ref: Option<&mut Meal> = None;
+		for m in &mut self.meals {
+			if m.id == meal {
+				meal_ref = Some(m);
+				break;
+			}
+		}
+
+		// Look up the food.
+		let mut food_ref: Option<Food> = None;
+		for f in &self.foods {
+			if f.id == food {
+				food_ref = Some(f.convert_to_quantity(quantity));
+				break;
+			}
+		}
+
+		// If we can't find the food or meal, abort.
+		if let (Some(m), Some(f)) = (meal_ref, food_ref) {
+			m.add_food_to_meal(&f);
+			return true;
+		} else {
+			return false;
+		}
 	}
 }
 
 #[cfg(test)]
 mod tests {
+	use crate::*;
+	
 	#[test]
-	fn it_works() {
-		assert_eq!(2 + 2, 4);
+	fn make_empty_food_db() {
+		let mut db = FoodDB::new();
+		let new_food_id = db.new_food();
+		//println!("New food id: {}", new_food_id);
+		db.save("empty.fdb");
 	}
 }

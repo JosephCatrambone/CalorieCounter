@@ -19,9 +19,9 @@ pub struct Meal {
 
 	// Normalized data, rolled up from the linked Foods.
 	pub calories: u64,
-	pub carbohydrate: u64,
-	pub fat: u64,
-	pub protein: u64,
+	pub carbohydrate: f64,
+	pub fat: f64,
+	pub protein: f64,
 
 	// Foods inside.
 	pub foods: Vec<Food>,
@@ -41,9 +41,9 @@ impl Default for Meal {
 			day: 0u8,
 
 			calories: 0,
-			carbohydrate: 0,
-			fat: 0,
-			protein: 0,
+			carbohydrate: 0.0,
+			fat: 0.0,
+			protein: 0.0,
 
 			foods: vec![],
 		}
@@ -51,7 +51,7 @@ impl Default for Meal {
 }
 
 impl Meal {
-	fn add_food_to_meal(&mut self, food:&Food) {
+	pub fn add_food_to_meal(&mut self, food:&Food) {
 		self.calories += food.calories;
 		self.carbohydrate += food.carbohydrate;
 		self.fat += food.fat;
