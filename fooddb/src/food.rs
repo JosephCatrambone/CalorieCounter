@@ -81,7 +81,7 @@ impl Default for Food {
 }
 
 impl Food {
-	fn scale(&mut self, scale_factor: f64) {
+	pub fn scale(&mut self, scale_factor: f64) {
 		self.calories = (self.calories as f64 * scale_factor) as u64;
 		self.carbohydrate *= scale_factor;
 		self.fat *= scale_factor;

@@ -68,6 +68,12 @@ impl FoodDB {
 	}
 
 	pub fn add_food_to_meal(&mut self, meal: MealID, food: FoodID, quantity: FoodQuantity) -> bool {
+		let food_ref = self.get_food_from_id(food);
+
+		if food_ref.is_none() {
+			return false;
+		}
+
 		// Look up the meal.
 		let mut meal_ref: Option<&mut Meal> = None;
 		for m in &mut self.meals {
@@ -77,29 +83,35 @@ impl FoodDB {
 			}
 		}
 
-		// Look up the food.
-		let mut food_ref: Option<Food> = None;
-		for f in &self.foods {
-			if f.id == food {
-				food_ref = Some(f.convert_to_quantity(quantity));
-				break;
-			}
-		}
-
 		// If we can't find the food or meal, abort.
 		if let (Some(m), Some(f)) = (meal_ref, food_ref) {
-			m.add_food_to_meal(&f);
+			let resized_food = f.convert_to_quantity(quantity);
+			m.add_food_to_meal(&resized_food);
 			return true;
 		} else {
 			return false;
 		}
+	}
+
+	fn get_food_from_id(&self, food:FoodID) -> Option<Food> {
+		// Look up the food.
+		for f in &self.foods {
+			if f.id == food {
+				return Some(f.clone());
+			}
+		}
+		return None;
+	}
+
+	fn find_food_by_name(&self, name:&str) -> FoodID {
+		todo!()
 	}
 }
 
 #[cfg(test)]
 mod tests {
 	use crate::*;
-	
+
 	#[test]
 	fn make_empty_food_db() {
 		let mut db = FoodDB::new();
