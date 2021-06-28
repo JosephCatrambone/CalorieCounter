@@ -1,11 +1,12 @@
 
-//use hashbrown::HashMap;
+use hashbrown::HashMap;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufReader, Read, Result, prelude::*};
 
 mod food;
 mod meal;
+mod search;
 
 use food::{Food, FoodID, FoodQuantity};
 use meal::{Meal, MealID};
@@ -16,16 +17,24 @@ pub struct FoodDB {
 	last_meal_id: u64,
 	foods: Vec<Food>,
 	meals: Vec<Meal>,
+	food_index: HashMap<u64, FoodID>
 }
 
-impl FoodDB {
-	pub fn new() -> Self {
+impl Default for FoodDB {
+	fn default() -> Self {
 		FoodDB {
 			last_food_id: 0,
 			last_meal_id: 0,
 			foods: vec![],
 			meals: vec![],
+			food_index: HashMap::new()
 		}
+	}
+}
+
+impl FoodDB {
+	pub fn new() -> Self {
+		FoodDB::default()
 	}
 
 	pub fn open(filename: &str) -> Result<Self> {
@@ -101,6 +110,10 @@ impl FoodDB {
 			}
 		}
 		return None;
+	}
+
+	fn reindex_food_db(&mut self) {
+
 	}
 
 	fn find_food_by_name(&self, name:&str) -> FoodID {
