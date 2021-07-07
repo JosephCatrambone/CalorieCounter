@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 //use serde_json::Result;
 
+use crate::nutrition::Nutrients;
+
 #[derive(Serialize, Deserialize, Clone)]
 pub enum FoodQuantity {
 	Mass(u64), // in grams
@@ -18,19 +20,16 @@ pub struct Food {
 	pub manufacturer: String,
 	pub tags: String,  // These are | separated.
 
-	pub calories: u64,
-	pub carbohydrate: f64,
-	pub fat: f64,
-	pub protein: f64,
-	
+	pub nutrition: Nutrients,
+
 	pub mass: u64, // Should be 100g
-	pub volume: f64, // What is 100g in ml / cm^3?
-	pub serving: f64, // How many servings is 100g?
+	pub volume_of_100g: f64, // What is 100g in ml / cm^3?
+	pub servings_in_100g: f64, // How many servings is 100g?
 
 	// Remove is_composite because can say this is true from ingredients being non-empty.
 	//is_composite: bool, // Is this just 'defined' as something, or is this a product of other foods?  
 	pub user_defined: bool,
-	pub ingredients: Vec<Food>,
+	pub ingredients: Vec<(FoodID, FoodQuantity)>,
 }
 
 impl Clone for Food {
@@ -42,14 +41,11 @@ impl Clone for Food {
 			manufacturer: self.manufacturer.clone(),
 			tags: self.tags.clone(),
 			
-			calories: self.calories,
-			carbohydrate: self.carbohydrate,
-			fat: self.fat,
-			protein: self.protein,
+			nutrition: self.nutrition.clone(),
 			
 			mass: self.mass,
-			volume: self.volume,
-			serving: self.serving,
+			volume_of_100g: self.volume_of_100g,
+			servings_in_100g: self.servings_in_100g,
 			
 			user_defined: self.user_defined,
 			ingredients: self.ingredients.clone(),
@@ -65,15 +61,10 @@ impl Default for Food {
 			name: String::new(),
 			manufacturer: String::new(),
 			tags: String::new(),
-
-			calories: 0,
-			carbohydrate: 0.0,
-			fat: 0.0,
-			protein: 0.0,
-
+			nutrition: Nutrients::default(),
 			mass: 100,
-			volume: 0f64,
-			serving: 0f64,
+			volume_of_100g: 0f64,
+			servings_in_100g: 0f64, // If 1 serving is 200g, this is 0.5.  100 / mass_per_serving.
 			user_defined: false,
 			ingredients: vec![]
 		}
@@ -81,30 +72,22 @@ impl Default for Food {
 }
 
 impl Food {
-	pub fn scale(&mut self, scale_factor: f64) {
-		self.calories = (self.calories as f64 * scale_factor) as u64;
-		self.carbohydrate *= scale_factor;
-		self.fat *= scale_factor;
-		self.protein *= scale_factor;
-		self.mass *= (scale_factor as f64 * scale_factor) as u64;
-		self.volume *= scale_factor;
-		self.serving *= scale_factor;
-	}
+	fn get_nutrition(&self, amount:FoodQuantity) -> Nutrients {
+		// Foods should be in 100g servings.
+		let mut nutrients = self.nutrition.clone();
 
-	/// convert_to_quantity will take the given food, clone it internally, and return a new food with the same ID that has a different quantity.
-	pub fn convert_to_quantity(&self, to_quantity:FoodQuantity) -> Food {
-		let mut converted_food = self.clone();
+		if self.mass != 100 {
+			// Oi!  This food should be a 100g serving!  Convert the nutrients to that.
+			nutrients *= 100f32 / (self.mass as f32);
+		}
 
-		converted_food.scale(match to_quantity {
-			FoodQuantity::Mass(to_grams) => { to_grams as f64 / self.mass as f64 },
-			FoodQuantity::Volume(to_volume) => { to_volume / self.volume },
-			FoodQuantity::Serving(to_servings) => { to_servings / self.serving }
-		});
+		let scale_factor = match amount {
+			FoodQuantity::Mass(grams) => { grams as f32 / 100f32 }
+		}
 
-		converted_food
+		nutrients
 	}
 }
-
 
 
 #[cfg(test)]

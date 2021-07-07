@@ -6,7 +6,7 @@ use std::io::{BufReader, Read, Result, prelude::*};
 
 mod food;
 mod meal;
-mod search;
+mod nutrition;
 
 use food::{Food, FoodID, FoodQuantity};
 use meal::{Meal, MealID};

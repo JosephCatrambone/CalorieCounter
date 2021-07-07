@@ -12,7 +12,7 @@ def main(empty_db_filename:str, food_nutrition_csv_filename:str, output_db_filen
 			# Find best match for each row.
 			"parent_id": 0,
 			"id": int(nd['ID']),
-			"name": nd['name'],
+			"name": nd['Name'],
 			"calories": int(float(nd['Calories'])),
 			"carbohydrate": float(nd['Carbohydrate (g)']),
 			"protein": float(nd['Protein (g)']),
@@ -29,4 +29,4 @@ def main(empty_db_filename:str, food_nutrition_csv_filename:str, output_db_filen
 		json.dump(base_db, fout)
 
 if __name__=="__main__":
-	main("empty.fdb", "food_nutrition_per_100g.csv", "base.fdb")
+	main("empty.fdb", "MyFoodData_Nutrition_Facts_SpreadSheet_Release_1_4.csv", "base.fdb")
