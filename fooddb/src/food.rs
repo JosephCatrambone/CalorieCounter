@@ -5,9 +5,9 @@ use crate::nutrition::Nutrients;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum FoodQuantity {
-	Mass(u64), // in grams
-	Volume(f64), // in cm^3, a.k.a., ml.
-	Serving(f64)
+	Mass(u32), // in grams.  Max value: approximate mass of Saturn-V rocket.
+	Volume(f32), // in cm^3, a.k.a., ml.  Max value: a cube with sides of several million km.
+	Serving(f32)
 }
 
 pub type FoodID = u64;
@@ -22,9 +22,9 @@ pub struct Food {
 
 	pub nutrition: Nutrients,
 
-	pub mass: u64, // Should be 100g
-	pub volume_of_100g: f64, // What is 100g in ml / cm^3?
-	pub servings_in_100g: f64, // How many servings is 100g?
+	pub mass: u32, // Should be 100g.  This is NOT molar mass.  Just a scalar, just in case.
+	pub volume_of_100g: f32, // What is 100g in ml / cm^3?  This is the reciprocal of 'density', sometimes called 'specific volume'.
+	pub servings_in_100g: f32, // How many servings is 100g?
 
 	// Remove is_composite because can say this is true from ingredients being non-empty.
 	//is_composite: bool, // Is this just 'defined' as something, or is this a product of other foods?  
@@ -63,8 +63,8 @@ impl Default for Food {
 			tags: String::new(),
 			nutrition: Nutrients::default(),
 			mass: 100,
-			volume_of_100g: 0f64,
-			servings_in_100g: 0f64, // If 1 serving is 200g, this is 0.5.  100 / mass_per_serving.
+			volume_of_100g: 0.0,
+			servings_in_100g: 0.0, // If 1 serving is 200g, this is 0.5.  100 / mass_per_serving.
 			user_defined: false,
 			ingredients: vec![]
 		}
@@ -76,16 +76,14 @@ impl Food {
 		// Foods should be in 100g servings.
 		let mut nutrients = self.nutrition.clone();
 
-		if self.mass != 100 {
-			// Oi!  This food should be a 100g serving!  Convert the nutrients to that.
-			nutrients *= 100f32 / (self.mass as f32);
-		}
-
+		// Convert the amount in scale factor to a 100g equivalent.
 		let scale_factor = match amount {
-			FoodQuantity::Mass(grams) => { grams as f32 / 100f32 }
-		}
+			FoodQuantity::Mass(grams) => { (grams as f32) / (self.mass as f32) },
+			FoodQuantity::Volume(cm3) => { cm3 / self.volume_of_100g },
+			FoodQuantity::Serving(servings) => { servings / self.servings_in_100g }
+		};
 
-		nutrients
+		nutrients * scale_factor
 	}
 }
 
@@ -95,16 +93,24 @@ mod tests {
 	use crate::food::*;
 
 	#[test]
-	fn test_scale() {
-		let mut food = Food::default();
-		food.name = String::from("asdfasdf");
-		food.manufacturer = String::from("ruewiongew");
-		food.tags = String::from("uifouaf");
+	fn test_amount_scaling() {
+		let mut sugar = Food::default();
+		sugar.name = String::from("sugar");
 
-		let mut same_food = food.clone();
-		same_food.scale(1.0f64);
+		sugar.mass = 100; // This should be 100 by default.
+		sugar.volume_of_100g = 118.29; // Some say 0.7g/cm^3 density, which is 1.428cm^3/g specific volume -> x100g = 142.8cm^3.  Going with 118.29.
+		sugar.servings_in_100g = 3.57; // A serving is 28g.  3.57 servings = 100g.
 
-		assert_eq!(food.name, same_food.name);
-		assert_eq!(food.calories, same_food.calories);
+		sugar.nutrition.calories = 387; // 387 calories per 100g.
+		sugar.nutrition.carbohydrates = 10.0;
+		sugar.nutrition.fats = 10.0;
+		sugar.nutrition.proteins = 10.0;
+
+		// Scale sugar.
+		let sugar_5g = sugar.get_nutrition(FoodQuantity::Mass(5));
+		let sugar_1tsp = sugar.get_nutrition(FoodQuantity::Volume(4.9f32)); // 1 tsp = 4.9ml^2
+		// 16 calories in 1tsp sugar.  (Which is about 4.2g)
+		assert_eq!(sugar_5g.calories, 387/20);
+		assert_eq!(sugar_1tsp.calories, 16);
 	}
 }

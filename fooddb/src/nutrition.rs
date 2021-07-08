@@ -3,10 +3,10 @@ use std::ops::Mul;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Nutrients {
-	calories: u32,  // In units
-	fats: f32, // In grams
-	carbohydrates: f32, // In grams
-	proteins: f32 // In grams
+	pub calories: u32,  // In units
+	pub fats: f32, // In grams
+	pub carbohydrates: f32, // In grams
+	pub proteins: f32 // In grams
 }
 
 impl Default for Nutrients {

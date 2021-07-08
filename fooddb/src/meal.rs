@@ -24,7 +24,7 @@ pub struct Meal {
 	pub protein: f64,
 
 	// Foods inside.
-	pub foods: Vec<Food>,
+	pub foods: Vec<(FoodID, FoodQuantity)>,
 }
 
 impl Default for Meal {
@@ -47,15 +47,5 @@ impl Default for Meal {
 
 			foods: vec![],
 		}
-	}
-}
-
-impl Meal {
-	pub fn add_food_to_meal(&mut self, food:&Food) {
-		self.calories += food.calories;
-		self.carbohydrate += food.carbohydrate;
-		self.fat += food.fat;
-		self.protein += food.protein;
-		self.foods.push(food.clone());
 	}
 }

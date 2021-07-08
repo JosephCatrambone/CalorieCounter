@@ -94,8 +94,7 @@ impl FoodDB {
 
 		// If we can't find the food or meal, abort.
 		if let (Some(m), Some(f)) = (meal_ref, food_ref) {
-			let resized_food = f.convert_to_quantity(quantity);
-			m.add_food_to_meal(&resized_food);
+			todo!();
 			return true;
 		} else {
 			return false;
