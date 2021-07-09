@@ -7,6 +7,7 @@ use std::io::{BufReader, Read, Result, prelude::*};
 mod food;
 mod meal;
 mod nutrition;
+mod search;
 
 use food::{Food, FoodID, FoodQuantity};
 use meal::{Meal, MealID};
@@ -17,6 +18,7 @@ pub struct FoodDB {
 	last_meal_id: u64,
 	foods: Vec<Food>,
 	meals: Vec<Meal>,
+	#[serde(skip)]
 	food_index: HashMap<u64, FoodID>
 }
 
@@ -70,6 +72,7 @@ impl FoodDB {
 		self.last_food_id = next_food_id;
 		let food = Food {
 			id: next_food_id,
+			user_defined: true,
 			..Food::default()
 		};
 		self.foods.push(food);
@@ -94,7 +97,12 @@ impl FoodDB {
 
 		// If we can't find the food or meal, abort.
 		if let (Some(m), Some(f)) = (meal_ref, food_ref) {
-			todo!();
+			let nutrition = f.get_nutrition(quantity);
+			m.nutrients.calories += nutrition.calories;
+			m.nutrients.proteins += nutrition.proteins;
+			m.nutrients.carbohydrates += nutrition.carbohydrates;
+			m.nutrients.fats += nutrition.fats;
+			m.foods.push((food, quantity));
 			return true;
 		} else {
 			return false;

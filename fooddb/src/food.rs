@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::nutrition::Nutrients;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum FoodQuantity {
 	Mass(u32), // in grams.  Max value: approximate mass of Saturn-V rocket.
 	Volume(f32), // in cm^3, a.k.a., ml.  Max value: a cube with sides of several million km.
@@ -72,7 +72,7 @@ impl Default for Food {
 }
 
 impl Food {
-	fn get_nutrition(&self, amount:FoodQuantity) -> Nutrients {
+	pub fn get_nutrition(&self, amount:FoodQuantity) -> Nutrients {
 		// Foods should be in 100g servings.
 		let mut nutrients = self.nutrition.clone();
 

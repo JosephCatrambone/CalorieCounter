@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::ops::Mul;
+use std::ops::{Add, Mul};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Nutrients {
@@ -38,5 +38,17 @@ impl Mul<Nutrients> for f32 {
 
 	fn mul(self, rhs: Nutrients) -> Self::Output {
 		rhs * self
+	}
+}
+
+impl Add<Nutrients> for Nutrients {
+	type Output = Nutrients;
+	fn add(self, rhs: Nutrients) -> Self::Output {
+		Nutrients {
+			calories: self.calories + rhs.calories,
+			carbohydrates: self.carbohydrates + rhs.carbohydrates,
+			fats: self.fats + rhs.fats,
+			proteins: self.proteins + rhs.proteins
+		}
 	}
 }

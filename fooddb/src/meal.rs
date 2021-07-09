@@ -2,9 +2,11 @@ use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::food::*;
+use crate::nutrition::Nutrients;
 
 pub type MealID = u64;
 
+// This duplicates a lot of fields from Foods, but is distinct and is a focus of lib.
 #[derive(Serialize, Deserialize)]
 pub struct Meal {
 	pub id: MealID,
@@ -18,12 +20,10 @@ pub struct Meal {
 	pub meal_name: String, // Breakfast, Lunch, Dinner, etc.
 
 	// Normalized data, rolled up from the linked Foods.
-	pub calories: u64,
-	pub carbohydrate: f64,
-	pub fat: f64,
-	pub protein: f64,
+	pub nutrients: Nutrients,
 
 	// Foods inside.
+	// Note that we can't do a roll-up in here because it relies on a Food dict and we can't loop up FoodID internally.
 	pub foods: Vec<(FoodID, FoodQuantity)>,
 }
 
@@ -40,10 +40,7 @@ impl Default for Meal {
 			month: 0u8,
 			day: 0u8,
 
-			calories: 0,
-			carbohydrate: 0.0,
-			fat: 0.0,
-			protein: 0.0,
+			nutrients: Nutrients::default(),
 
 			foods: vec![],
 		}
