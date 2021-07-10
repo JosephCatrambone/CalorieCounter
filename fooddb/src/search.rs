@@ -99,7 +99,7 @@ impl PrefixTree {
 		let mut matches = Vec::<String>::with_capacity(max_results as usize);
 
 		// If we are past our depth, i.e., there are no more characters in the autocomplete sequence, give back everything at this level.
-		if self.depth > starting_string.len() {
+		if self.depth >= starting_string.len() {
 			for w in &self.words {
 				matches.push(w.clone());
 			}
@@ -155,12 +155,15 @@ mod tests {
 
 		// Should find both spelenda and sugar, but not 'food'.
 		let res:Vec<String> = autocomplete.fuzzy_matches(&"s".to_string(), 10);
-		assert!(res.contains(&"sugar".to_string()));
-		assert!(res.contains(&"sucralose".to_string()));
+		assert!(res.contains(&"Sugar".to_string()));
+		assert!(res.contains(&"splenda".to_string()));
 		assert!(!res.contains(&"food".to_string()));
 
 		let empty:Vec<String> = autocomplete.fuzzy_matches(&"asdf".to_string(), 10);
 		assert!(empty.is_empty());
+
+		let just_food:Vec<String> = autocomplete.fuzzy_matches(&"food".to_string(), 10);
+		assert_eq!(vec!["food"], just_food);
 	}
 
 	#[test]
@@ -168,6 +171,6 @@ mod tests {
 		let foods = bootstrap_foods();
 		let index = SearchIndex::new(&foods);
 
-		let search_results = index.search("sugar".to_string());
+		let search_results = index.search(&"sugar".to_string());
 	}
 }
