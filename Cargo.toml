@@ -8,12 +8,12 @@ edition = "2018"
 [workspace]
 
 [[bin]]
-name = "cli"
-path = "src/cli.rs"
+name = "main_cli"
+path = "src/main_cli.rs"
 
 [[bin]]
-name = "webap"
-path = "src/webapp.rs"
+name = "main_webapp"
+path = "src/main_webapp.rs"
 
 [dependencies]
 fooddb = { path = "fooddb" }
