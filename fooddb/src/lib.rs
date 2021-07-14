@@ -11,6 +11,7 @@ mod search;
 
 use food::{Food, FoodID, FoodQuantity};
 use meal::{Meal, MealID};
+use search::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct FoodDB {
@@ -19,7 +20,7 @@ pub struct FoodDB {
 	foods: Vec<Food>,
 	meals: Vec<Meal>,
 	#[serde(skip)]
-	food_index: HashMap<u64, FoodID>
+	food_index: SearchIndex,
 }
 
 impl Default for FoodDB {
@@ -29,7 +30,7 @@ impl Default for FoodDB {
 			last_meal_id: 0,
 			foods: vec![],
 			meals: vec![],
-			food_index: HashMap::new()
+			food_index: SearchIndex::empty(),
 		}
 	}
 }
@@ -44,7 +45,8 @@ impl FoodDB {
 		let mut reader = BufReader::new(fin);
 		let mut json_buffer = String::new();
 		reader.read_to_string(&mut json_buffer)?;
-		let deserialized: FoodDB = serde_json::from_str(&json_buffer)?;
+		let mut deserialized: FoodDB = serde_json::from_str(&json_buffer)?;
+		deserialized.food_index.reindex(&deserialized.foods);
 		Ok(deserialized)
 	}
 
@@ -76,6 +78,7 @@ impl FoodDB {
 			..Food::default()
 		};
 		self.foods.push(food);
+		self.food_index.reindex(&self.foods);
 		next_food_id
 	}
 
@@ -119,12 +122,12 @@ impl FoodDB {
 		return None;
 	}
 
-	fn reindex_food_db(&mut self) {
-
-	}
-
 	fn find_food_by_name(&self, name:&str) -> FoodID {
 		todo!()
+	}
+
+	fn get_autocomplete_suggestions(&self, food_name:String) -> Vec<String> {
+		self.food_index.search(&food_name).iter().map(|fsr|{ fsr.name.clone() }).collect()
 	}
 }
 

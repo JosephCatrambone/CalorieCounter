@@ -3,33 +3,38 @@ use crate::food::{FoodID, Food};
 use hashbrown::HashMap;
 
 pub struct FoodSearchResult {
-	id: FoodID,
-	name: String,
+	pub id: FoodID,
+	pub name: String,
 	relevance: f32
 }
 
 // Do not derive serialize/deserialize.  Regenerate index on init.
-pub struct SearchIndex<'a> {
+pub struct SearchIndex {
 	fulltext_index: BTreeMap<String, FoodID>,
 	autocomplete: PrefixTree,
-	food_db_ref: &'a Vec<Food>
 }
 
-impl<'a> SearchIndex<'a> {
-	pub fn new(food_db:&'a Vec<Food>) -> Self {
-		let mut fulltext_index = BTreeMap::new();
-		let mut autocomplete_index = PrefixTree::new();
+impl SearchIndex {
+	pub fn empty() -> Self {
+		SearchIndex {
+			fulltext_index: BTreeMap::new(),
+			autocomplete: PrefixTree::new(),
+		}
+	}
 
+	pub fn reindex(&mut self, food_db:&Vec<Food>) {
+		self.fulltext_index = BTreeMap::new();
+		self.autocomplete = PrefixTree::new();
 		food_db.iter().for_each(|f|{
 			fulltext_index.insert(f.name.clone(), f.id);
 			autocomplete_index.add_word(f.name.clone());
 		});
+	}
 
-		SearchIndex {
-			fulltext_index: fulltext_index,
-			autocomplete: autocomplete_index,
-			food_db_ref: food_db,
-		}
+	pub fn new(food_db:&Vec<Food>) -> Self {
+		let mut new_index = SearchIndex::empty();
+		new_index.reindex(food_db);
+		new_index
 	}
 
 	pub fn search(&self, food_name:&String) -> Vec<FoodSearchResult> {
@@ -66,7 +71,7 @@ pub struct PrefixTree {
 }
 
 impl PrefixTree {
-	fn new() -> Self {
+	pub fn new() -> Self {
 		PrefixTree {
 			depth: 0,
 			child_trees: HashMap::new(),
@@ -74,7 +79,7 @@ impl PrefixTree {
 		}
 	}
 
-	fn add_word(&mut self, word:String) {
+	pub fn add_word(&mut self, word:String) {
 		// Is there another letter we need to store?
 		if self.depth >= word.len() {
 			// No.  Can just add the word at this level.
@@ -95,7 +100,7 @@ impl PrefixTree {
 		}
 	}
 
-	fn fuzzy_matches(&self, starting_string:&String, max_results: u8) -> Vec<String> {
+	pub fn fuzzy_matches(&self, starting_string:&String, max_results: u8) -> Vec<String> {
 		let mut matches = Vec::<String>::with_capacity(max_results as usize);
 
 		// If we are past our depth, i.e., there are no more characters in the autocomplete sequence, give back everything at this level.
