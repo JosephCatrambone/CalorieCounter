@@ -11,23 +11,29 @@ pub struct FoodSearchResult {
 // Do not derive serialize/deserialize.  Regenerate index on init.
 pub struct SearchIndex {
 	fulltext_index: BTreeMap<String, FoodID>,
-	autocomplete: PrefixTree,
+	autocomplete_index: PrefixTree,
+}
+
+impl Default for SearchIndex {
+	fn default() -> Self {
+		SearchIndex {
+			fulltext_index: BTreeMap::new(),
+			autocomplete_index: PrefixTree::new(),
+		}
+	}
 }
 
 impl SearchIndex {
 	pub fn empty() -> Self {
-		SearchIndex {
-			fulltext_index: BTreeMap::new(),
-			autocomplete: PrefixTree::new(),
-		}
+		SearchIndex::default()
 	}
 
 	pub fn reindex(&mut self, food_db:&Vec<Food>) {
 		self.fulltext_index = BTreeMap::new();
-		self.autocomplete = PrefixTree::new();
+		self.autocomplete_index = PrefixTree::new();
 		food_db.iter().for_each(|f|{
-			fulltext_index.insert(f.name.clone(), f.id);
-			autocomplete_index.add_word(f.name.clone());
+			self.fulltext_index.insert(f.name.clone(), f.id);
+			self.autocomplete_index.add_word(f.name.clone());
 		});
 	}
 
@@ -50,7 +56,7 @@ impl SearchIndex {
 		}
 		
 		// Append other matches.
-		for name in self.autocomplete.fuzzy_matches(food_name, 10) {
+		for name in self.autocomplete_index.fuzzy_matches(food_name, 10) {
 			if let Some(id) = self.fulltext_index.get(&name) {
 				matches.push(FoodSearchResult {
 					id: *id,

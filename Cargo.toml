@@ -18,5 +18,6 @@ path = "src/main_webapp.rs"
 [dependencies]
 fooddb = { path = "fooddb" }
 
-[dependencies.cli]
-cursive = { version = "0.16", features = "crossterm-backend" }
+crossterm = "0.19"
+#tui = { version = "0.15", default-features = false, features = ['crossterm'] }
+cursive = { version = "0.16", default-features = false, features = ['crossterm-backend'] }
