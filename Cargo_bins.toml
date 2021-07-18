@@ -1,0 +1,23 @@
+[package]
+name = "calorie_counter"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+
+[[bin]]
+name = "main_cli"
+path = "src/main_cli.rs"
+
+[[bin]]
+name = "main_webapp"
+path = "src/main_webapp.rs"
+
+[dependencies]
+fooddb = { path = "fooddb" }
+
+crossterm = "0.19"
+#tui = { version = "0.15", default-features = false, features = ['crossterm'] }
+cursive = { version = "0.16", default-features = false, features = ['crossterm-backend'] }
