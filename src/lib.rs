@@ -12,11 +12,10 @@ mod search;
 use food::{Food, FoodID, FoodQuantity};
 use meal::{Meal, MealID};
 use search::*;
+use chrono::Datelike;
 
 #[derive(Serialize, Deserialize)]
 pub struct FoodDB {
-	last_food_id: u64,
-	last_meal_id: u64,
 	foods: Vec<Food>,
 	meals: Vec<Meal>,
 	#[serde(skip)]
@@ -26,8 +25,6 @@ pub struct FoodDB {
 impl Default for FoodDB {
 	fn default() -> Self {
 		FoodDB {
-			last_food_id: 0,
-			last_meal_id: 0,
 			foods: vec![],
 			meals: vec![],
 			food_index: SearchIndex::empty(),
@@ -45,7 +42,11 @@ impl FoodDB {
 		let mut reader = BufReader::new(fin);
 		let mut json_buffer = String::new();
 		reader.read_to_string(&mut json_buffer)?;
-		let mut deserialized: FoodDB = serde_json::from_str(&json_buffer)?;
+		Self::from_string(&json_buffer)
+	}
+
+	pub fn from_string(json_string:&str) -> Result<Self> {
+		let mut deserialized: FoodDB = serde_json::from_str(json_string)?;
 		deserialized.food_index.reindex(&deserialized.foods);
 		Ok(deserialized)
 	}
@@ -59,8 +60,7 @@ impl FoodDB {
 	}
 
 	pub fn new_meal(&mut self) -> MealID {
-		let next_meal_id = self.last_meal_id+1;
-		self.last_meal_id = next_meal_id;
+		let next_meal_id = self.meals.len();
 		let meal = Meal {
 			id: next_meal_id,
 			..Meal::default()
@@ -69,17 +69,16 @@ impl FoodDB {
 		next_meal_id
 	}
 
-	pub fn new_food(&mut self) -> FoodID {
-		let next_food_id = self.last_food_id+1;
-		self.last_food_id = next_food_id;
+	pub fn new_food(&mut self) -> &mut Food {
+		let next_food_id = self.foods.len();
 		let food = Food {
-			id: next_food_id,
+			id: next_food_id as u64,
 			user_defined: true,
 			..Food::default()
 		};
 		self.foods.push(food);
 		self.food_index.reindex(&self.foods);
-		next_food_id
+		self.foods.get_mut(next_food_id).expect("Unable to fetch newly added food reference.  Out of memory?")
 	}
 
 	pub fn add_food_to_meal(&mut self, meal: MealID, food: FoodID, quantity: FoodQuantity) -> bool {
@@ -89,18 +88,12 @@ impl FoodDB {
 			return false;
 		}
 
-		// Look up the meal.
-		let mut meal_ref: Option<&mut Meal> = None;
-		for m in &mut self.meals {
-			if m.id == meal {
-				meal_ref = Some(m);
-				break;
-			}
-		}
+		let nutrition = food_ref.unwrap().get_nutrition(quantity);
+
+		let mut meal_ref = self.get_meal_mut_from_id(meal);
 
 		// If we can't find the food or meal, abort.
-		if let (Some(m), Some(f)) = (meal_ref, food_ref) {
-			let nutrition = f.get_nutrition(quantity);
+		if let Some(m) = meal_ref {
 			m.nutrients.calories += nutrition.calories;
 			m.nutrients.proteins += nutrition.proteins;
 			m.nutrients.carbohydrates += nutrition.carbohydrates;
@@ -112,22 +105,56 @@ impl FoodDB {
 		}
 	}
 
-	fn get_food_from_id(&self, food:FoodID) -> Option<Food> {
-		// Look up the food.
-		for f in &self.foods {
-			if f.id == food {
-				return Some(f.clone());
+	pub fn get_food_from_id(&self, food_id:FoodID) -> Option<&Food> {
+		// food_id should be the position in the array.
+		let opt_food = self.foods.get(food_id as usize);
+		if let Some(f) = opt_food {
+			if f.id != food_id {
+				eprintln!("ERROR: food {} not found at ID index.  {} != {}", f.name, f.id, food_id);
 			}
 		}
-		return None;
+
+		opt_food
 	}
 
-	fn find_food_by_name(&self, name:&str) -> FoodID {
-		todo!()
+	pub fn get_food_mut_from_id(&mut self, food_id:FoodID) -> Option<&mut Food> {
+		// food_id should be the position in the array.
+		match self.foods.get_mut(food_id as usize) {
+			Some(f) => {
+				if f.id != food_id {
+					panic!("ERROR: food {} not found at ID index.  {} != {}", f.name, f.id, food_id);
+				}
+				Some(f)
+			},
+			None => None
+		}
 	}
 
-	fn get_autocomplete_suggestions(&self, food_name:String) -> Vec<String> {
-		self.food_index.search(&food_name).iter().map(|fsr|{ fsr.name.clone() }).collect()
+	pub fn get_meal_from_id(&self, meal_id:MealID) -> Option<&Meal> {
+		self.meals.get(meal_id)
+	}
+
+	pub fn get_meal_mut_from_id(&mut self, meal_id:MealID) -> Option<&mut Meal> {
+		self.meals.get_mut(meal_id)
+	}
+
+	pub fn get_meals_from_date(&self, year:i32, month:u32, day:u32) -> Vec<MealID> {
+		let mut results = vec![];
+		// Brute force search.  :/
+		for m in &self.meals {
+			if m.time.year() == year && m.time.month() == month && m.time.day() == day {
+				results.push(m.id);
+			}
+		}
+		results
+	}
+
+	fn get_autocomplete_suggestions(&self, food_name:String) -> Vec<(FoodID, String)> {
+		self.food_index.search(&food_name).iter().map(|fsr|{ (fsr.id, fsr.name.clone()) }).collect()
+	}
+
+	pub fn reindex(&mut self) {
+		self.food_index.reindex(&self.foods);
 	}
 }
 

@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
-use std::time::{SystemTime, UNIX_EPOCH};
+//use std::time::{SystemTime, UNIX_EPOCH};
+use chrono::{DateTime, Utc};
 
 use crate::food::*;
 use crate::nutrition::Nutrients;
 
-pub type MealID = u64;
+pub type MealID = usize;
 
 // This duplicates a lot of fields from Foods, but is distinct and is a focus of lib.
 #[derive(Serialize, Deserialize)]
@@ -13,10 +14,7 @@ pub struct Meal {
 	pub name: String,
 	pub tags: String,
 
-	pub time: u64, // Unix timestamp.
-	pub year: u64,
-	pub month: u8,
-	pub day: u8,
+	pub time: DateTime<Utc>,
 	pub meal_name: String, // Breakfast, Lunch, Dinner, etc.
 
 	// Normalized data, rolled up from the linked Foods.
@@ -35,10 +33,7 @@ impl Default for Meal {
 			meal_name: String::new(),
 			tags: String::new(),
 
-			time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
-			year: 0u64,
-			month: 0u8,
-			day: 0u8,
+			time: Utc::now(),
 
 			nutrients: Nutrients::default(),
 

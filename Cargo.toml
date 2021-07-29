@@ -3,9 +3,33 @@ name = "fooddb"
 version = "0.1.0"
 edition = "2018"
 
+[lib]
+name = "fooddb"
+
+[[bin]]
+name = "cli"
+path = "src/bin/main_cli.rs"
+#test = false
+#bench = false
+
+[[bin]]
+name = "desktop"
+path = "src/bin/main.rs"
+required-features = ["desktop_ui"]
+
+[features]
+#[cfg(feature = "desktop_ui")]
+#desktop_ui = [{}]
+desktop_ui = ["egui", "egui-macroquad", "macroquad"]
+
 [dependencies]
+chrono = { version = "0.4", features = ["serde", "wasmbind"] }
 hashbrown = { version = "0.11", features = ["serde"] }
 num = { version = "0.4", features = ["default", "serde"] }
 regex = "1.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+egui = { version = "^0.13", optional = true }
+egui-macroquad = { version ="^0.5", optional = true }
+macroquad = { version = "^0.3", optional = true }

@@ -74,7 +74,7 @@ impl Default for Food {
 impl Food {
 	pub fn get_nutrition(&self, amount:FoodQuantity) -> Nutrients {
 		// Foods should be in 100g servings.
-		let mut nutrients = self.nutrition.clone();
+		let nutrients = self.nutrition.clone();
 
 		// Convert the amount in scale factor to a 100g equivalent.
 		let scale_factor = match amount {
