@@ -1,9 +1,10 @@
-use fooddb::FoodDB;
+use fooddb::{FoodDB, FoodID, FoodQuantity};
 use std::io;
 use std::io::prelude::*;
 use hashbrown::HashMap;
 use std::iter::FromIterator;
 use std::array::IntoIter;
+use std::convert::TryFrom;
 
 // Structure across all app modes.
 struct AppState {
@@ -44,21 +45,73 @@ fn main_menu(app_state: &mut AppState) {
 	// Until we have hashmap macros...
 	let main_menu_options = HashMap::<char, &str>::from_iter(IntoIter::new([
 		('n', "New Food"),
+		('s', "Search Food"),
 		('q', "Quit"),
 	]));
-	match show_menu(
+	match show_map_menu(
 		"Please choose an operation.",
 		main_menu_options,
 		None
 	) {
-		'q' => {
-			app_state.quit = true;
-		},
+		'q' => { app_state.quit = true; },
+		's' => { search_food_menu(app_state); },
 		_ => {}
 	};
 }
 
-fn show_menu(prompt: &str, options: HashMap<char, &str>, default:Option<char>) -> char {
+fn search_food_menu(app_state: &AppState) -> FoodID {
+	let stdin = io::stdin();
+	let mut stdin = stdin.lock();
+	let mut buffer = String::new();
+
+	println!("Enter (partial) food name: ");
+	if let Ok(bytes_read) = stdin.read_line(&mut buffer) {
+		if bytes_read == 0 {
+			panic!("Failed to read from STDIN.");
+		}
+		println!("Matching...");
+		let matches:Vec<(FoodID, String)> = app_state.food_db.get_autocomplete_suggestions(buffer.trim().to_string());
+		let (food_ids, food_names): (Vec<FoodID>, Vec<String>) = matches.iter().map(|(fid, fname)|{ (fid, fname.clone()) }).unzip();
+		return food_ids[show_list_menu("Best Matches:", food_names) as usize];
+	} else {
+		panic!("Unable to read from STDIN.");
+	}
+}
+
+fn confirm(prompt: &str) -> bool {
+	let options = HashMap::<char, &str>::from_iter(IntoIter::new([('y', "Yes"), ('n', "No")]));
+	show_map_menu(prompt, options, None) == 'y'
+}
+
+fn show_list_menu(prompt: &str, options: Vec<String>) -> u32 {
+	let stdin = io::stdin();
+	let mut stdin = stdin.lock();
+	let mut buffer = String::new();
+	let mut choice: u32 = 0;
+
+	while choice == 0 {
+		println!("{}", &prompt);
+		for (ch, desc) in options.iter().enumerate() {
+			println!("{}: {}", ch+1, desc);
+		}
+
+		if let Ok(bytes_read) = stdin.read_line(&mut buffer) {
+			if let Ok(num) = buffer.parse::<u32>() {
+				if num >= 1 && num <= options.len() as u32 {
+					choice = num;
+				}
+			}
+		}
+
+		if choice == 0 { // Invalid selection.
+			println!("Please choose an item in the range of 1 to {}", &options.len()+1);
+		}
+	}
+
+	choice-1
+}
+
+fn show_map_menu(prompt: &str, options: HashMap<char, &str>, default:Option<char>) -> char {
 	let stdin = io::stdin();
 	let mut stdin = stdin.lock();
 	//let stdout = io::stdout();

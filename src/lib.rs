@@ -9,8 +9,8 @@ mod meal;
 mod nutrition;
 mod search;
 
-use food::{Food, FoodID, FoodQuantity};
-use meal::{Meal, MealID};
+pub use food::{Food, FoodID, FoodQuantity};
+pub use meal::{Meal, MealID};
 use search::*;
 use chrono::Datelike;
 
@@ -149,7 +149,7 @@ impl FoodDB {
 		results
 	}
 
-	fn get_autocomplete_suggestions(&self, food_name:String) -> Vec<(FoodID, String)> {
+	pub fn get_autocomplete_suggestions(&self, food_name:String) -> Vec<(FoodID, String)> {
 		self.food_index.search(&food_name).iter().map(|fsr|{ (fsr.id, fsr.name.clone()) }).collect()
 	}
 
@@ -168,5 +168,6 @@ mod tests {
 		let new_food_id = db.new_food();
 		//println!("New food id: {}", new_food_id);
 		db.save("empty.fdb");
+		let db2 = FoodDB::open("empty.fdb").unwrap();
 	}
 }

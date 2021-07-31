@@ -5,16 +5,18 @@ edition = "2018"
 
 [lib]
 name = "fooddb"
+#test = true
+#bench = true
 
 [[bin]]
 name = "cli"
 path = "src/bin/main_cli.rs"
-#test = false
 #bench = false
 
 [[bin]]
 name = "desktop"
 path = "src/bin/main.rs"
+#test = false
 required-features = ["desktop_ui"]
 
 [features]
