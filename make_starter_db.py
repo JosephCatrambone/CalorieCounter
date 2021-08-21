@@ -13,20 +13,25 @@ def main(empty_db_filename:str, food_nutrition_csv_filename:str, output_db_filen
 			"parent_id": 0,
 			"id": int(nd['ID']),
 			"name": nd['Name'],
-			"calories": int(float(nd['Calories'])),
-			"carbohydrate": float(nd['Carbohydrate (g)']),
-			"protein": float(nd['Protein (g)']),
-			"fat": float(nd['Fat (g)']),
+			"manufacturer": "",
+            "nutrition":{
+                "calories": int(float(nd['Calories'])),
+                "carbohydrates": float(nd['Carbohydrate (g)']),
+                "proteins": float(nd['Protein (g)']),
+                "fats": float(nd['Fat (g)']),
+            },
 			"mass": 100,
-			"volume": 1,
-			"serving": 100/max(1.0, float(nd.get('Serving Weight 2 (g)', "100") or "100")),
+			"volume_of_100g": 1,
+			"servings_in_100g": 100/max(1.0, float(nd.get('Serving Weight 2 (g)', "100") or "100")),
+			"user_defined":False,
+			"ingredients":[],
+			"tags":"",
 		} for nd in nutrition_data]
-		# {"last_food_id":1,"last_meal_id":0,
-		# "foods":[
-		# 	{"id":1,"name":"","manufacturer":"","tags":"","calories":0,"carbohydrate":0,"fat":0,"protein":0,"mass":100,"volume":0.0,"serving":0.0,"user_defined":false,"ingredients":[]}
-		# ],"meals":[]}
+		# {"foods":[{"parent_id":0,"id":0,"name":"Tasty Food","manufacturer":"","tags":"","nutrition":{"calories":260,"fats":20.0,"carbohydrates":60.0,"proteins":20.0},"mass":100,"volume_of_100g":0.0,"servings_in_100g":0.0,"user_defined":true,"ingredients":[]}],"meals":[]}
+		base_db['meals'] = []
 	with open(output_db_filename, 'wt') as fout:
 		json.dump(base_db, fout)
 
 if __name__=="__main__":
-	main("empty.fdb", "MyFoodData_Nutrition_Facts_SpreadSheet_Release_1_4.csv", "base.fdb")
+	main("empty.fdb", "MyFoodData_Nutrition_Facts_SpreadSheet_Release_1_4.csv", "default.fdb")
+    

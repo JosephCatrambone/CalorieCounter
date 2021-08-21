@@ -1,4 +1,5 @@
 
+use bzip2::{Compression, read::{BzEncoder, BzDecoder}};
 use hashbrown::HashMap;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -13,6 +14,7 @@ pub use food::{Food, FoodID, FoodQuantity};
 pub use meal::{Meal, MealID};
 use search::*;
 use chrono::Datelike;
+use bzip2::Decompress;
 
 #[derive(Serialize, Deserialize)]
 pub struct FoodDB {
@@ -51,12 +53,23 @@ impl FoodDB {
 		Ok(deserialized)
 	}
 
+	pub fn from_bz2(blob:&[u8]) -> Result<Self> {
+		let mut buffer = String::new();
+		let mut decompressor = BzDecoder::new(blob);
+		decompressor.read_to_string(&mut buffer);
+		Self::from_string(&buffer)
+	}
+
 	pub fn save(&self, filename:&str) -> Result<()> {
 		let serialized = serde_json::to_vec(self)?;
 		//let mut fout = OpenOptions::new().write(true).create(true).truncate(true).open(filename);
 		let mut fout = File::create(filename)?;
 		fout.write_all(&serialized)?;
 		Ok(())
+	}
+
+	pub fn save_compressed(&self, filename:&str) -> Result<()> {
+		todo!()
 	}
 
 	pub fn new_meal(&mut self) -> MealID {
@@ -150,7 +163,7 @@ impl FoodDB {
 	}
 
 	pub fn get_autocomplete_suggestions(&self, food_name:String) -> Vec<(FoodID, String)> {
-		self.food_index.search(&food_name).iter().map(|fsr|{ (fsr.id, fsr.name.clone()) }).collect()
+		self.food_index.search(&food_name, None).iter().map(|fsr|{ (fsr.id, fsr.name.clone()) }).collect()
 	}
 
 	pub fn reindex(&mut self) {
@@ -169,5 +182,24 @@ mod tests {
 		//println!("New food id: {}", new_food_id);
 		db.save("empty.fdb");
 		let db2 = FoodDB::open("empty.fdb").unwrap();
+	}
+
+	#[test]
+	fn make_single_entry_food_db() {
+		let mut db = FoodDB::new();
+		{
+			let mut food = db.new_food();
+			food.name = "Tasty Food".to_string();
+			food.nutrition.proteins = 20.0f32;
+			food.nutrition.fats = 20.0f32;
+			food.nutrition.carbohydrates = 60.0f32;
+			food.nutrition.calories = 9 * 20 + 4 * 20; // 9 calories per gram of fat.  4 per gram of carbs.
+		}
+		db.reindex();
+		db.save("single_food.fdb");
+		let mut db2 = FoodDB::open("single_food.fdb").unwrap();
+		assert_eq!(db2.foods.len(), 1);
+		db2.reindex();
+		assert_eq!(db2.get_autocomplete_suggestions("Tasty".to_string()).len(), 1);
 	}
 }

@@ -25,6 +25,7 @@ required-features = ["desktop_ui"]
 desktop_ui = ["egui", "egui-macroquad", "macroquad"]
 
 [dependencies]
+bzip2 = { version = "0.4" }  # , features = ["tokio"] for async?
 chrono = { version = "0.4", features = ["serde", "wasmbind"] }
 hashbrown = { version = "0.11", features = ["serde"] }
 num = { version = "0.4", features = ["default", "serde"] }

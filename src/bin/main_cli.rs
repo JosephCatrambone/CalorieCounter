@@ -15,20 +15,8 @@ struct AppState {
 
 fn main() {
 	//let mut food_db = FoodDB::from_string(mq::file::load_string(""));
-	let mut food_db = FoodDB::default();
-	{
-		let mut fid = food_db.new_food();
-		fid.name = "TestFood".to_string();
-		fid.manufacturer = "TestManufacturer".to_string();
-		fid.volume_of_100g = 100.0;
-		fid.servings_in_100g = 1.0;
-		fid.nutrition.calories = 0;
-		fid.nutrition.carbohydrates = 0.0;
-		fid.nutrition.fats = 0.0;
-		fid.nutrition.proteins = 0.0;
-	}
+	let mut food_db = FoodDB::from_string(include_str!("../assets/default.fdb")).unwrap();
 	food_db.reindex();
-	food_db.save("food_db.fdb");
 
 	let mut app_state = AppState {
 		result_stack: vec![],
@@ -60,8 +48,8 @@ fn main_menu(app_state: &mut AppState) {
 }
 
 fn search_food_menu(app_state: &AppState) -> FoodID {
-	let stdin = io::stdin();
-	let mut stdin = stdin.lock();
+	let stdin_lock = io::stdin();
+	let mut stdin = stdin_lock.lock();
 	let mut buffer = String::new();
 
 	println!("Enter (partial) food name: ");
@@ -69,9 +57,10 @@ fn search_food_menu(app_state: &AppState) -> FoodID {
 		if bytes_read == 0 {
 			panic!("Failed to read from STDIN.");
 		}
-		println!("Matching...");
 		let matches:Vec<(FoodID, String)> = app_state.food_db.get_autocomplete_suggestions(buffer.trim().to_string());
 		let (food_ids, food_names): (Vec<FoodID>, Vec<String>) = matches.iter().map(|(fid, fname)|{ (fid, fname.clone()) }).unzip();
+		drop(stdin);
+		drop(stdin_lock);
 		return food_ids[show_list_menu("Best Matches:", food_names) as usize];
 	} else {
 		panic!("Unable to read from STDIN.");

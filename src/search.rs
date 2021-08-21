@@ -43,8 +43,9 @@ impl SearchIndex {
 		new_index
 	}
 
-	pub fn search(&self, food_name:&String) -> Vec<FoodSearchResult> {
+	pub fn search(&self, food_name:&String, max_results:Option<u8>) -> Vec<FoodSearchResult> {
 		let mut matches = vec![];
+		let max_results = max_results.unwrap_or(10);
 
 		// If we have an exact match, return it.
 		if let Some(id) = self.fulltext_index.get(food_name) {
@@ -56,7 +57,7 @@ impl SearchIndex {
 		}
 		
 		// Append other matches.
-		for name in self.autocomplete_index.fuzzy_matches(food_name, 10) {
+		for name in self.autocomplete_index.fuzzy_matches(food_name, max_results) {
 			if let Some(id) = self.fulltext_index.get(&name) {
 				matches.push(FoodSearchResult {
 					id: *id,
@@ -182,6 +183,6 @@ mod tests {
 		let foods = bootstrap_foods();
 		let index = SearchIndex::new(&foods);
 
-		let search_results = index.search(&"sugar".to_string());
+		let search_results = index.search(&"sugar".to_string(), None);
 	}
 }
