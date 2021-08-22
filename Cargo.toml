@@ -22,7 +22,7 @@ required-features = ["desktop_ui"]
 [features]
 #[cfg(feature = "desktop_ui")]
 #desktop_ui = [{}]
-desktop_ui = ["iced"]
+desktop_ui = ["egui", "egui-macroquad", "macroquad"]
 
 [dependencies]
 bzip2 = { version = "0.4" }  # , features = ["tokio"] for async?
@@ -34,4 +34,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # For binaries.
-iced = { version = "^0.3", optional = true }
+#iced = { version = "^0.3", optional = true }
+egui = { version = "^0.13", optional = true }
+egui-macroquad = { version ="^0.5", optional = true }
+macroquad = { version = "^0.3", optional = true }
